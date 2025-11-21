@@ -1,9 +1,3 @@
-Here is a professional, industry-standard `README.md` file based on the project we built. It contains no emojis and focuses strictly on technical implementation and architecture.
-
-You can create a file named `README.md` in your main folder and paste this content directly.
-
-***
-
 # End-to-End DevOps E-Commerce Project
 
 ## Project Overview
@@ -147,5 +141,4 @@ To avoid incurring AWS charges, destroy the infrastructure when finished. Follow
     terraform destroy -auto-approve
     ```
 
-## License
-This project is open-source and available for educational purposes.
+
