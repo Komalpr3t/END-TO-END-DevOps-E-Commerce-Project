@@ -1,0 +1,25 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: techshop-app
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: techshop
+  template:
+    metadata:
+      labels:
+        app: techshop
+    spec:
+      containers:
+      - name: techshop
+        # This is your actual image we pushed earlier
+        image: komalpreet1703/ecommerce-devops-image:v1
+        ports:
+        - containerPort: 3000
+        imagePullPolicy: Always
+        resources:
+          limits:
+            memory: "256Mi"
+            cpu: "500m"

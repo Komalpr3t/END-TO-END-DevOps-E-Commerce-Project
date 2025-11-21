@@ -1,0 +1,11 @@
+# Ignore Terraform heavy files
+.terraform/
+*.tfstate
+*.tfstate.backup
+.terraform.lock.hcl
+
+# Ignore Node heavy files
+node_modules/
+
+# System files
+.DS_Store

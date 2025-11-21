@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VS Code Shop</title>
+    <style>
+        body { font-family: sans-serif; margin: 0; background: #f0f2f5; display: flex; justify-content: center; }
+        
+        /* --- Login Styles --- */
+        #login-section { margin-top: 100px; background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); width: 300px; text-align: center; }
+        input { display: block; width: 90%; padding: 10px; margin: 10px auto; border: 1px solid #ccc; border-radius: 4px; }
+        
+        /* --- Store Styles (Hidden by default) --- */
+        #store-section { display: none; width: 100%; max-width: 800px; padding: 20px; }
+        header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 20px; }
+        .card { background: white; padding: 15px; border-radius: 8px; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        img { max-width: 100%; border-radius: 4px; }
+        
+        /* Shared Button */
+        .btn { background: #007bff; color: white; border: none; padding: 10px 20px; cursor: pointer; border-radius: 4px; margin-top: 10px; }
+        .btn:hover { background: #0056b3; }
+        .btn-logout { background: #dc3545; }
+        
+        .error { color: red; font-size: 0.9rem; display: none; }
+    </style>
+</head>
+<body>
+
+    <!-- 1. LOGIN SCREEN -->
+    <div id="login-section">
+        <h2>Welcome Back</h2>
+        <p>Please login to shop</p>
+        <input type="text" id="username" placeholder="Username (try: admin)" />
+        <input type="password" id="password" placeholder="Password (try: 123)" />
+        <p id="login-error" class="error">Invalid username or password</p>
+        <button class="btn" onclick="handleLogin()">Login</button>
+    </div>
+
+    <!-- 2. STORE SCREEN -->
+    <div id="store-section">
+        <header>
+            <h1>ByteCart</h1>
+            <div>
+                <span id="cart-count">Cart: 0</span>
+                <button class="btn btn-logout" onclick="logout()">Logout</button>
+            </div>
+        </header>
+
+        <div id="products" class="grid"></div>
+        
+        <div style="margin-top: 30px; background: white; padding: 20px; border-radius: 8px;">
+            <h3>Your Cart</h3>
+            <ul id="cart-list" style="padding-left: 20px;"></ul>
+            <button class="btn" onclick="checkout()">Checkout Now</button>
+        </div>
+    </div>
+
+    <script>
+        let cart = [];
+
+        // --- LOGIN LOGIC ---
+        async function handleLogin() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const errorMsg = document.getElementById('login-error');
+
+            const response = await fetch('/api/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password })
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                // Hide Login, Show Store
+                document.getElementById('login-section').style.display = 'none';
+                document.getElementById('store-section').style.display = 'block';
+                loadProducts(); // Load items only after login
+            } else {
+                errorMsg.style.display = 'block';
+            }
+        }
+
+        function logout() {
+            location.reload(); // Simple reload to reset
+        }
+
+        // --- STORE LOGIC ---
+        async function loadProducts() {
+            const res = await fetch('/api/products');
+            const products = await res.json();
+            
+            const container = document.getElementById('products');
+            container.innerHTML = products.map(p => `
+                <div class="card">
+                    <img src="${p.image}" />
+                    <h4>${p.name}</h4>
+                    <p>$${p.price}</p>
+                    <button class="btn" onclick="addToCart(${p.id}, '${p.name}', ${p.price})">Add</button>
+                </div>
+            `).join('');
+        }
+
+        function addToCart(id, name, price) {
+            cart.push({ id, name, price, quantity: 1 });
+            updateCartUI();
+        }
+
+        function updateCartUI() {
+            document.getElementById('cart-count').innerText = `Cart: ${cart.length}`;
+            const list = document.getElementById('cart-list');
+            if(cart.length === 0) list.innerHTML = "<li>Empty</li>";
+            else list.innerHTML = cart.map(i => `<li>${i.name} - $${i.price}</li>`).join('');
+        }
+
+        async function checkout() {
+            if(cart.length === 0) return alert("Cart is empty");
+            
+            const res = await fetch('/api/checkout', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ cart })
+            });
+            const data = await res.json();
+            alert(data.message);
+            cart = [];
+            updateCartUI();
+        }
+    </script>
+</body>
+</html>
