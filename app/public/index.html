@@ -3,131 +3,291 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VS Code Shop</title>
+    <title>DevOps TechShop AI</title>
+    <!-- Fonts & Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
     <style>
-        body { font-family: sans-serif; margin: 0; background: #f0f2f5; display: flex; justify-content: center; }
+        :root {
+            --primary: #4f46e5;
+            --secondary: #818cf8;
+            --dark: #1e1b4b;
+            --light: #f5f3ff;
+            --glass: rgba(255, 255, 255, 0.9);
+        }
+
+        body { font-family: 'Poppins', sans-serif; margin: 0; background: #eef2f6; color: #333; overflow-x: hidden; }
+
+        /* --- Animations --- */
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes slideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
+
+        /* --- Login Screen --- */
+        #login-section {
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(135deg, #4f46e5 0%, #06b6d4 100%);
+        }
+        .login-card {
+            background: var(--glass); padding: 3rem; border-radius: 20px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.2); text-align: center; width: 350px;
+            backdrop-filter: blur(10px); animation: fadeIn 0.8s ease;
+        }
+        .login-card input { width: 100%; padding: 12px; margin: 10px 0; border: none; background: #f0f0f0; border-radius: 8px; box-sizing: border-box; }
+        .btn { background: var(--primary); color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; width: 100%; font-weight: 600; transition: 0.3s; }
+        .btn:hover { background: #4338ca; transform: scale(1.02); }
+
+        /* --- Store Interface --- */
+        #store-section { display: none; }
         
-        /* --- Login Styles --- */
-        #login-section { margin-top: 100px; background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); width: 300px; text-align: center; }
-        input { display: block; width: 90%; padding: 10px; margin: 10px auto; border: 1px solid #ccc; border-radius: 4px; }
+        nav {
+            display: flex; justify-content: space-between; align-items: center; padding: 15px 5%;
+            background: white; box-shadow: 0 2px 10px rgba(0,0,0,0.05); position: sticky; top: 0; z-index: 100;
+        }
+        .logo { font-size: 1.5rem; font-weight: bold; color: var(--primary); }
+        .nav-items span { margin-left: 20px; font-weight: 500; cursor: pointer; position: relative; }
+        .nav-items span:hover { color: var(--primary); }
         
-        /* --- Store Styles (Hidden by default) --- */
-        #store-section { display: none; width: 100%; max-width: 800px; padding: 20px; }
-        header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 20px; }
-        .card { background: white; padding: 15px; border-radius: 8px; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        img { max-width: 100%; border-radius: 4px; }
+        .hero {
+            background: linear-gradient(to right, #4f46e5, #818cf8); color: white; padding: 80px 5%;
+            text-align: center; border-radius: 0 0 50px 50px; margin-bottom: 40px;
+        }
+        .hero h1 { font-size: 3rem; margin: 0; }
+
+        /* Products Grid */
+        .container { max-width: 1200px; margin: 0 auto; padding: 0 20px 50px 20px; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 30px; }
         
-        /* Shared Button */
-        .btn { background: #007bff; color: white; border: none; padding: 10px 20px; cursor: pointer; border-radius: 4px; margin-top: 10px; }
-        .btn:hover { background: #0056b3; }
-        .btn-logout { background: #dc3545; }
-        
-        .error { color: red; font-size: 0.9rem; display: none; }
+        .card {
+            background: white; border-radius: 15px; padding: 20px; text-align: center;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05); transition: 0.3s; display: flex; flex-direction: column; justify-content: space-between;
+        }
+        .card:hover { transform: translateY(-10px); box-shadow: 0 15px 30px rgba(0,0,0,0.1); }
+        .card img { width: 100%; height: 160px; object-fit: contain; margin-bottom: 15px; }
+        .price { font-size: 1.2rem; color: var(--primary); font-weight: bold; margin: 10px 0; }
+
+        /* --- Cart Modal Overlay --- */
+        #cart-modal {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5); z-index: 2000; justify-content: center; align-items: center;
+            animation: fadeIn 0.2s ease;
+        }
+        .cart-content {
+            background: white; width: 90%; max-width: 500px; padding: 30px; border-radius: 15px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.3); position: relative; max-height: 80vh; overflow-y: auto;
+        }
+        .close-btn { position: absolute; top: 15px; right: 20px; font-size: 1.5rem; cursor: pointer; color: #666; }
+        .cart-item { display: flex; justify-content: space-between; padding: 15px 0; border-bottom: 1px solid #eee; }
+
+        /* --- AI Chatbot --- */
+        #chatbot-btn {
+            position: fixed; bottom: 30px; right: 30px; background: var(--primary); color: white; width: 60px; height: 60px;
+            border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 24px; cursor: pointer;
+            box-shadow: 0 10px 25px rgba(79, 70, 229, 0.4); transition: 0.3s; z-index: 1000;
+        }
+        #chatbot-btn:hover { transform: scale(1.1); }
+        .chat-window {
+            position: fixed; bottom: 100px; right: 30px; width: 350px; height: 450px; background: white; border-radius: 20px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.2); display: none; flex-direction: column; z-index: 1000;
+        }
+        .chat-header { background: var(--primary); color: white; padding: 15px; display: flex; justify-content: space-between; align-items: center; }
+        .chat-body { flex: 1; padding: 15px; overflow-y: auto; background: #f9fafb; font-size: 0.9rem; }
+        .chat-input-area { padding: 15px; border-top: 1px solid #eee; display: flex; gap: 10px; background: white; }
+        .chat-input-area input { flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 20px; outline: none; }
+        .msg { margin-bottom: 10px; padding: 10px 15px; border-radius: 15px; max-width: 80%; }
+        .msg.bot { background: #e0e7ff; color: #333; align-self: flex-start; }
+        .msg.user { background: var(--primary); color: white; margin-left: auto; }
     </style>
 </head>
 <body>
 
     <!-- 1. LOGIN SCREEN -->
     <div id="login-section">
-        <h2>Welcome Back</h2>
-        <p>Please login to shop</p>
-        <input type="text" id="username" placeholder="Username (try: admin)" />
-        <input type="password" id="password" placeholder="Password (try: 123)" />
-        <p id="login-error" class="error">Invalid username or password</p>
-        <button class="btn" onclick="handleLogin()">Login</button>
+        <div class="login-card">
+            <h1 style="margin:0;">TechShop <span style="color:var(--primary)">.ai</span></h1>
+            <p>DevOps & AI Powered Commerce</p>
+            <input type="text" id="username" placeholder="Username (admin)" />
+            <input type="password" id="password" placeholder="Password (123)" />
+            <button class="btn" onclick="handleLogin()">Enter Shop</button>
+            <p id="login-error" style="color:red; display:none; margin-top:10px;">Invalid Credentials</p>
+        </div>
     </div>
 
     <!-- 2. STORE SCREEN -->
     <div id="store-section">
-        <header>
-            <h1>TechShop</h1>
-            <div>
-                <span id="cart-count">Cart: 0</span>
-                <button class="btn btn-logout" onclick="logout()">Logout</button>
+        <nav>
+            <div class="logo">TechShop.ai</div>
+            <div class="nav-items">
+                <span onclick="scrollToProducts()">Products</span>
+                <span id="nav-cart-btn" onclick="toggleCartModal()">
+                    <i class="fas fa-shopping-cart"></i> Cart (0)
+                </span>
+                <span onclick="logout()" style="color:red;">Logout</span>
             </div>
-        </header>
+        </nav>
 
-        <div id="products" class="grid"></div>
-        
-        <div style="margin-top: 30px; background: white; padding: 20px; border-radius: 8px;">
-            <h3>Your Cart</h3>
-            <ul id="cart-list" style="padding-left: 20px;"></ul>
-            <button class="btn" onclick="checkout()">Checkout Now</button>
+        <div class="hero">
+            <h1>The Future of Shopping</h1>
+            <p>Powered by Kubernetes, Docker, and Artificial Intelligence.</p>
+        </div>
+
+        <div class="container">
+            <h2 style="margin-bottom: 30px;">Featured Tech</h2>
+            <div id="products" class="grid"></div>
         </div>
     </div>
 
+    <!-- 3. CART MODAL (Popup) -->
+    <div id="cart-modal">
+        <div class="cart-content">
+            <span class="close-btn" onclick="toggleCartModal()">&times;</span>
+            <h2>Your Shopping Cart</h2>
+            <div id="cart-list">
+                <p style="text-align: center; color: #888;">Your cart is empty.</p>
+            </div>
+            <div style="margin-top: 20px; text-align: right;">
+                <h3 id="cart-total">Total: $0</h3>
+                <button class="btn" onclick="checkout()">Checkout Now</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 4. AI CHATBOT -->
+    <div id="chatbot-btn" onclick="toggleChat()">
+        <i class="fas fa-robot"></i>
+    </div>
+
+    <div class="chat-window" id="chat-window">
+        <div class="chat-header">
+            <span>ShopBot AI</span>
+            <i class="fas fa-times" onclick="toggleChat()" style="cursor:pointer;"></i>
+        </div>
+        <div class="chat-body" id="chat-body">
+            <div class="msg bot">Hello! I am ShopBot. Ask me about our 16 new tech products! 🤖</div>
+        </div>
+        <div class="chat-input-area">
+            <input type="text" id="chat-input" placeholder="Ask something..." onkeypress="handleEnter(event)">
+            <button class="btn" style="width:auto; padding: 8px 15px;" onclick="sendMessage()"><i class="fas fa-paper-plane"></i></button>
+        </div>
+    </div>
+
+    <!-- LOGIC -->
     <script>
         let cart = [];
 
-        // --- LOGIN LOGIC ---
         async function handleLogin() {
-            const username = document.getElementById('username').value;
-            const password = document.getElementById('password').value;
-            const errorMsg = document.getElementById('login-error');
-
-            const response = await fetch('/api/login', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username, password })
-            });
-
-            const result = await response.json();
-
-            if (result.success) {
-                // Hide Login, Show Store
-                document.getElementById('login-section').style.display = 'none';
-                document.getElementById('store-section').style.display = 'block';
-                loadProducts(); // Load items only after login
-            } else {
-                errorMsg.style.display = 'block';
-            }
+            const u = document.getElementById('username').value;
+            const p = document.getElementById('password').value;
+            try {
+                const res = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ username: u, password: p })
+                });
+                const result = await res.json();
+                if (result.success) {
+                    document.getElementById('login-section').style.display = 'none';
+                    document.getElementById('store-section').style.display = 'block';
+                    loadProducts();
+                } else {
+                    document.getElementById('login-error').style.display = 'block';
+                }
+            } catch(e) { alert("Server not running! Start node server.js"); }
         }
 
-        function logout() {
-            location.reload(); // Simple reload to reset
-        }
+        function logout() { location.reload(); }
 
-        // --- STORE LOGIC ---
         async function loadProducts() {
             const res = await fetch('/api/products');
             const products = await res.json();
-            
-            const container = document.getElementById('products');
-            container.innerHTML = products.map(p => `
+            document.getElementById('products').innerHTML = products.map(p => `
                 <div class="card">
                     <img src="${p.image}" />
                     <h4>${p.name}</h4>
-                    <p>$${p.price}</p>
-                    <button class="btn" onclick="addToCart(${p.id}, '${p.name}', ${p.price})">Add</button>
+                    <p class="price">$${p.price}</p>
+                    <button class="btn" onclick="addToCart(${p.id}, '${p.name}', ${p.price})">Add to Cart</button>
                 </div>
             `).join('');
         }
 
         function addToCart(id, name, price) {
-            cart.push({ id, name, price, quantity: 1 });
-            updateCartUI();
+            cart.push({id, name, price});
+            updateCartCount();
+            // Trigger AI comment occasionally
+            if(Math.random() > 0.5) setTimeout(() => addBotMessage(`Excellent choice! ${name} is high quality.`), 1000);
         }
 
-        function updateCartUI() {
-            document.getElementById('cart-count').innerText = `Cart: ${cart.length}`;
+        function updateCartCount() {
+            document.getElementById('nav-cart-btn').innerHTML = `<i class="fas fa-shopping-cart"></i> Cart (${cart.length})`;
+        }
+
+        function toggleCartModal() {
+            const modal = document.getElementById('cart-modal');
             const list = document.getElementById('cart-list');
-            if(cart.length === 0) list.innerHTML = "<li>Empty</li>";
-            else list.innerHTML = cart.map(i => `<li>${i.name} - $${i.price}</li>`).join('');
+            const totalEl = document.getElementById('cart-total');
+            
+            if (modal.style.display === 'flex') {
+                modal.style.display = 'none';
+            } else {
+                modal.style.display = 'flex';
+                // Render List
+                if(cart.length === 0) {
+                    list.innerHTML = '<p style="text-align: center; color: #888;">Your cart is empty.</p>';
+                    totalEl.innerText = "Total: $0";
+                } else {
+                    let total = 0;
+                    list.innerHTML = cart.map(i => {
+                        total += i.price;
+                        return `<div class="cart-item"><span>${i.name}</span><span>$${i.price}</span></div>`;
+                    }).join('');
+                    totalEl.innerText = `Total: $${total}`;
+                }
+            }
         }
 
         async function checkout() {
-            if(cart.length === 0) return alert("Cart is empty");
-            
-            const res = await fetch('/api/checkout', {
-                method: 'POST',
+            if(!cart.length) return alert("Cart is empty");
+            await fetch('/api/checkout', {
+                method: 'POST', 
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ cart })
+                body: JSON.stringify({cart})
             });
-            const data = await res.json();
-            alert(data.message);
-            cart = [];
-            updateCartUI();
+            alert("Order Placed Successfully!");
+            cart = []; 
+            updateCartCount();
+            toggleCartModal(); // Close modal
+            addBotMessage("Your order has been placed! I'll update you on shipping soon.");
+        }
+
+        // --- AI CHATBOT LOGIC ---
+        const chatBody = document.getElementById('chat-body');
+        function toggleChat() {
+            const win = document.getElementById('chat-window');
+            win.style.display = win.style.display === 'flex' ? 'none' : 'flex';
+        }
+        function handleEnter(e) { if(e.key === 'Enter') sendMessage(); }
+        function sendMessage() {
+            const input = document.getElementById('chat-input');
+            const text = input.value.trim();
+            if(!text) return;
+            chatBody.innerHTML += `<div class="msg user">${text}</div>`;
+            input.value = '';
+            chatBody.scrollTop = chatBody.scrollHeight;
+            setTimeout(() => addBotMessage(getAIResponse(text.toLowerCase())), 800);
+        }
+        function addBotMessage(text) {
+            chatBody.innerHTML += `<div class="msg bot">${text}</div>`;
+            chatBody.scrollTop = chatBody.scrollHeight;
+        }
+        function getAIResponse(input) {
+            if(input.includes('hello') || input.includes('hi')) return "Hello! Looking for a new monitor or mouse?";
+            if(input.includes('monitor')) return "Our 4K Ultra Monitor is crisp and perfect for coding!";
+            if(input.includes('shipping')) return "We ship globally via Docker containers! 🚚";
+            if(input.includes('cart')) return `You have ${cart.length} items. Ready to checkout?`;
+            return "I'm a simple AI. I can help with products, shipping, or returns.";
         }
     </script>
 </body>
